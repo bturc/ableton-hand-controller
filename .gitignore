@@ -14,5 +14,3 @@ models/*.task
 .DS_Store
 Thumbs.db
 .vscode/
-
-test_hands.py
