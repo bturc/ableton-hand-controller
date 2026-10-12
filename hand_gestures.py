@@ -129,7 +129,9 @@ def ensure_model():
         urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
 
 
-def main():
+def main(on_gesture=None):
+    """Run the webcam loop. If given, on_gesture(hand_label, gesture_name)
+    is called each time a gesture fires."""
     ensure_model()
     options = vision.HandLandmarkerOptions(
         base_options=mp_python.BaseOptions(model_asset_path=str(MODEL_PATH)),
@@ -169,6 +171,8 @@ def main():
             fired = tracker.update(gesture, now)
             if fired:
                 print(f"[{label}] {GESTURES[fired][1]}")
+                if on_gesture:
+                    on_gesture(label, fired)
 
             # drawing
             ipts = [(int(x), int(y)) for x, y in pts]

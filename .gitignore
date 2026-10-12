@@ -1,0 +1,18 @@
+# Environment
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Downloaded models
+models/*.task
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+test_hands.py
