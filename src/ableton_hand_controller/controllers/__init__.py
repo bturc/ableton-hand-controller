@@ -3,6 +3,7 @@
 A controller is any callable taking a gestures.GestureEvent.
 """
 
+from .clips import ClipController
 from .tempo import TempoController
 
-__all__ = ["TempoController"]
+__all__ = ["ClipController", "TempoController"]

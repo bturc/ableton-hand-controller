@@ -2,8 +2,9 @@
 
 import argparse
 
-from .ableton import AbletonOSC, Song
-from .controllers import TempoController
+from .ableton import AbletonOSC, Song, Track
+from .controllers import ClipController, TempoController
+from .gestures import count_fingers_or_zero
 from .pipeline import run
 
 
@@ -15,6 +16,15 @@ def cmd_tempo(args):
     with AbletonOSC() as osc, Song(osc) as song:
         print(f"Connected to Ableton Live. Current tempo: {song.tempo:.1f} BPM")
         run(TempoController(song), camera_index=args.camera, mirror=args.mirror)
+
+
+def cmd_clips(args):
+    with AbletonOSC() as osc:
+        track = Track(osc, args.track - 1)
+        print(f"Connected to Ableton Live. Controlling track {args.track}: {track.name}")
+        with ClipController(track) as controller:
+            run(controller, classifier=count_fingers_or_zero,
+                camera_index=args.camera, mirror=args.mirror)
 
 
 def cmd_check(_args):
@@ -35,6 +45,11 @@ def main(argv=None):
                    help="show the webcam and print detected gestures").set_defaults(func=cmd_gestures)
     sub.add_parser("tempo", parents=[camera_opts],
                    help="metal = -10 BPM, peace = +10 BPM").set_defaults(func=cmd_tempo)
+    clips = sub.add_parser("clips", parents=[camera_opts],
+                           help="N fingers = play clip N of a track, "
+                                "O sign = stop after the clip ends, fist = stop now")
+    clips.add_argument("--track", type=int, default=1, help="track number, starting at 1")
+    clips.set_defaults(func=cmd_clips)
     sub.add_parser("check",
                    help="check the connection to Ableton Live").set_defaults(func=cmd_check)
 

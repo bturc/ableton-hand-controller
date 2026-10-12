@@ -6,4 +6,4 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class GestureEvent:
     hand: str     # "Left" or "Right"
-    gesture: str  # a key of gestures.GESTURES
+    gesture: object  # what the pipeline's classifier returned, e.g. "peace" or 3

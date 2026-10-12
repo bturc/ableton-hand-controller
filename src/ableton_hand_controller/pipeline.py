@@ -9,9 +9,13 @@ from .vision import Camera, HandDetector
 from .vision.drawing import draw_hand, draw_status
 
 
-def run(on_gesture=None, camera_index=0, mirror=False, hold_seconds=0.3,
-        window_title="Ableton Hand Controller (q to quit)"):
+def run(on_gesture=None, classifier=classify, camera_index=0, mirror=False,
+        hold_seconds=0.3, window_title="Ableton Hand Controller (q to quit)"):
     """Show the webcam with hand overlays until 'q' is pressed.
+
+    classifier(points) turns a hand's landmarks into a gesture (anything
+    hashable, None for no gesture), e.g. gestures.classify or
+    gestures.count_fingers.
 
     on_gesture(GestureEvent) is called each time a gesture has been held for
     hold_seconds. It fires once per pose; change pose to fire again.
@@ -26,14 +30,15 @@ def run(on_gesture=None, camera_index=0, mirror=False, hold_seconds=0.3,
                 hands = detector.detect(frame, int((now - start) * 1000))
 
                 for hand in hands:
-                    gesture = classify(hand.points)
+                    gesture = classifier(hand.points)
                     tracker = trackers.setdefault(hand.label, GestureTracker(hold_seconds))
-                    if fired := tracker.update(gesture, now):
+                    if (fired := tracker.update(gesture, now)) is not None:
                         event = GestureEvent(hand.label, fired)
                         print(f"[{event.hand}] {event.gesture}")
                         if on_gesture:
                             on_gesture(event)
-                    draw_hand(frame, hand.points, f"{hand.label}: {gesture or '-'}")
+                    shown = "-" if gesture is None else gesture
+                    draw_hand(frame, hand.points, f"{hand.label}: {shown}")
 
                 # a hand that left the frame loses its state
                 seen = {hand.label for hand in hands}

@@ -21,3 +21,11 @@ def make_hand(extended=(), thumb=False):
         points[pip + 1] = (x, -100.0) if name in extended else (x, -70.0)
         points[tip] = (x, -120.0) if name in extended else (x, -60.0)
     return points
+
+
+def make_zero_sign():
+    """Fingers curled, with the index curved round to meet the thumb tip."""
+    points = make_hand()
+    points[8] = (-45.0, -65.0)  # index tip, away from its base
+    points[4] = (-40.0, -60.0)  # thumb tip, touching it
+    return points
