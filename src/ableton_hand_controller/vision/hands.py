@@ -18,7 +18,7 @@ DEFAULT_MODEL_PATH = Path("models/hand_landmarker.task")
 
 @dataclass(frozen=True)
 class Hand:
-    label: str  # "Left" or "Right", as reported by MediaPipe
+    label: str  # "Left" or "Right": the person's actual hand
     points: list[tuple[float, float]]  # 21 landmarks in pixel coordinates
 
 
@@ -32,9 +32,14 @@ def ensure_model(path=DEFAULT_MODEL_PATH):
 
 
 class HandDetector:
-    """Finds hands in video frames. Use as a context manager."""
+    """Finds hands in video frames. Use as a context manager.
 
-    def __init__(self, model_path=DEFAULT_MODEL_PATH, num_hands=2):
+    MediaPipe's handedness names the person's hand on a raw (unmirrored)
+    webcam image; set mirrored=True for flipped images so labels stay right.
+    """
+
+    def __init__(self, model_path=DEFAULT_MODEL_PATH, num_hands=2, mirrored=False):
+        self.mirrored = mirrored
         options = vision.HandLandmarkerOptions(
             base_options=mp_python.BaseOptions(model_asset_path=str(ensure_model(model_path))),
             running_mode=vision.RunningMode.VIDEO,
@@ -50,11 +55,16 @@ class HandDetector:
         result = self.landmarker.detect_for_video(image, timestamp_ms)
         return [
             Hand(
-                label=result.handedness[i][0].category_name,
+                label=self._label(result.handedness[i][0].category_name),
                 points=[(lm.x * w, lm.y * h) for lm in landmarks],
             )
             for i, landmarks in enumerate(result.hand_landmarks)
         ]
+
+    def _label(self, mediapipe_label):
+        if not self.mirrored:
+            return mediapipe_label
+        return {"Left": "Right", "Right": "Left"}[mediapipe_label]
 
     def close(self):
         self.landmarker.close()

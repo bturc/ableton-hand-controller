@@ -2,15 +2,28 @@
 
 import cv2
 
+DEFAULT_RESOLUTION = (1280, 720)
+
 
 class Camera:
-    """Reads BGR frames from a webcam. Use as a context manager."""
+    """Reads BGR frames from a webcam. Use as a context manager.
 
-    def __init__(self, index=0, mirror=False):
+    OpenCV opens webcams at 640x480 by default, which crops the sides of
+    16:9 sensors; asking for a 16:9 resolution gives the full field of view.
+    """
+
+    def __init__(self, index=0, mirror=False, resolution=DEFAULT_RESOLUTION):
         self.mirror = mirror
         self.cap = cv2.VideoCapture(index)
         if not self.cap.isOpened():
             raise RuntimeError(f"Could not open webcam {index}. Try another camera index.")
+        if resolution:
+            # Many Windows webcams only deliver HD frames as MJPG
+            self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, resolution[0])
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, resolution[1])
+        self.resolution = (int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+                           int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
     def read(self):
         """Return the next frame, or None if the camera stopped delivering."""

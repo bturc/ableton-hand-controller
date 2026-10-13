@@ -21,8 +21,23 @@ uv run ableton-hand-controller clips      # N fingers = play clip N of track 1,
                                           # O sign = stop after the clip ends, fist = stop now
 ```
 
-`gestures`, `tempo` and `clips` accept `--camera N` and `--mirror`; `clips` also
-accepts `--track N`. Press `q` in the webcam window to quit.
+`gestures`, `tempo` and `clips` accept `--camera N`, `--mirror`,
+`--resolution WxH` (default 1280x720), `--guitar` and `--hand left|right|any`;
+`clips` also accepts `--track N`. Press `q` in the webcam window to quit.
+
+### Playing guitar
+
+With `--guitar`, gestures are ignored while your fretting hand is on the neck,
+and accepted again once it has been off the neck for half a second. The webcam
+window shows the neck zone in red (`PLAYING`) or green (`LISTENING`).
+
+1. Sit in your playing position and run `uv run ableton-hand-controller calibrate`.
+   Press SPACE, then drag a box over the area your fretting hand covers while
+   playing and press ENTER. It's saved to `config/neck_zone.json` (not committed,
+   as it depends on your camera setup). Re-run it whenever the camera moves or
+   you change `--resolution` to a different aspect ratio.
+2. Run e.g. `uv run ableton-hand-controller clips --guitar`. Gestures come from
+   the left hand only by default; change with `--hand`.
 
 ## Project layout
 
@@ -33,7 +48,9 @@ src/ableton_hand_controller/
   gestures/       finger features, gesture definitions, finger counting, hold/debounce tracker
   ableton/        AbletonOSC client (send / query / listen) and Live wrappers (Song, Track)
   controllers/    gesture event -> action in Live (TempoController, ClipController)
-  pipeline.py     main loop: webcam -> hands -> gestures -> controller
+  gate.py         neck zone + gate that ignores gestures while playing guitar
+  calibrate.py    interactive drawing of the neck zone
+  pipeline.py     main loop: webcam -> hands -> gate -> gestures -> controller
   cli.py          the `ableton-hand-controller` command
 scripts/          small standalone examples using the library
 tests/            unit tests (no webcam or Live needed): `uv run pytest`
